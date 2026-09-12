@@ -1,0 +1,68 @@
+services:
+
+  mlflow:
+    image: python:3.11-slim
+    container_name: fnb-mlflow
+
+    working_dir: /mlflow
+
+    volumes:
+      - ./mlflow.db:/mlflow/mlflow.db
+      - ./mlruns:/mlflow/mlruns
+
+    ports:
+      - "5000:5000"
+
+    command: >
+      sh -c "
+      pip install --no-cache-dir mlflow xgboost &&
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri sqlite:///mlflow.db
+      --default-artifact-root mlflow-artifacts:
+      --artifacts-destination /mlflow/mlruns
+      --serve-artifacts
+      --allowed-hosts 'mlflow:5000,localhost:5000,127.0.0.1:5000'
+      "
+
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fnb-api
+
+    depends_on:
+      - mlflow
+
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+
+    volumes:
+      - ./mlruns:/mlflow/mlruns:ro
+
+    ports:
+      - "8000:8000"
+
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: fnb-dashboard
+
+    depends_on:
+      - api
+
+    environment:
+      API_BASE_URL: http://api:8000
+
+    ports:
+      - "8501:8501"
+
+    command: >
+      streamlit run dashboard/app.py
+      --server.address=0.0.0.0
+      --server.port=8501

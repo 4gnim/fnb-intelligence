@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.pyc
 
 # Virtual environment
 .venv/
@@ -28,6 +29,7 @@ data/external/*.csv
 # MLflow
 mlruns/
 mlartifacts/
+mlflow.db
 
 # Environment / secrets
 .env
@@ -41,3 +43,5 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+"@ | Set-Content .gitignore
